@@ -115,6 +115,42 @@ def fill_poly(points, color):
                 set_px(x, y, color)
 
 
+def fill_polys(polys, color):
+    """Even-odd scanline fill across several contours at once.
+
+    All contours of one glyph are filled in a single pass, so inner
+    contours (the counters of O, o, 0, a, e, D, 8, ...) stay hollow.
+    Filling each contour separately would paint every counter solid
+    (v2 bug: masthead read "N●vember 2●26", heads "F●REIGNER T●").
+    """
+    polys = [p for p in polys if len(p) >= 3]
+    if not polys:
+        return
+    ys = [p[1] for poly in polys for p in poly]
+    y0 = max(0, int(math.floor(min(ys))))
+    y1 = min(H - 1, int(math.ceil(max(ys))))
+    for y in range(y0, y1 + 1):
+        yc = y + 0.5
+        xs = []
+        for points in polys:
+            n = len(points)
+            for i in range(n):
+                x1, y1p = points[i]
+                x2, y2p = points[(i + 1) % n]
+                if (y1p <= yc < y2p) or (y2p <= yc < y1p):
+                    if y2p != y1p:
+                        t = (yc - y1p) / (y2p - y1p)
+                        xs.append(x1 + t * (x2 - x1))
+        if not xs:
+            continue
+        xs.sort()
+        for j in range(0, len(xs) - 1, 2):
+            xa = max(0, int(math.ceil(xs[j])))
+            xb = min(W - 1, int(math.floor(xs[j + 1])))
+            for x in range(xa, xb + 1):
+                set_px(x, y, color)
+
+
 def fill_circle(cx, cy, r, color):
     r = int(r)
     for y in range(int(cy) - r, int(cy) + r + 1):
@@ -177,11 +213,15 @@ def draw_text(x, y_baseline, s, size, face="regular", color=INK):
         if g is None:
             continue
         adv = g["adv"] * scale
+        # One even-odd pass over ALL contours of the glyph, so inner
+        # contours (counters of O, o, 0, a, e, D, 8 ...) stay hollow.
+        polys = []
         for contour in g["c"]:
             pts = []
             for (px, py) in contour:
                 pts.append((cx + px * scale, y_baseline - py * scale))
-            fill_poly(pts, color)
+            polys.append(pts)
+        fill_polys(polys, color)
         cx += adv
     return cx - x
 
