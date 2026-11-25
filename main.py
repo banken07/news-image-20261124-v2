@@ -1514,30 +1514,30 @@ def draw_datecheck(x, y, w, h):
     fill_rect(x, y, x + w, y + h, (253, 248, 240))
     draw_rect_outline(x, y, x + w, y + h, RED, 2)
     ix = x + 10
-    # v2.8: item gap 6 -> 7 for breathing room, funded by the 5px the
-    # also-list gap freed (also_bottom 810 -> 805, band 5px taller) —
-    # probe math: "Also covered" clearance ~2.8px (v2.7 was 3.8px math /
-    # 5px measured) — above the 2px floor. Font stays 10px: tracking
-    # 0.3 overflows the box.
+    # v2.9: bottom clearance "Also covered" 5px -> 8px (measured) by
+    # compacting the header 2px (rule +22->+21, "Left out" +33->+31,
+    # items +43->+41; title stays +12 — it already sits 1px off the top
+    # border) and the "Also covered" offset +5->+4. Item gap stays 7.
+    # Probe-measured header gaps stay >=1px; font stays 10px.
     draw_text(ix, y + 12, "DATE CHECK \u2014 WHAT IS NOT IN THIS IMAGE",
               13, "bold", RED)
-    draw_text(ix, y + 22,
+    draw_text(ix, y + 21,
               "Rule: only stories first reported on Tuesday 24 November 2026 "
               "are in the main list.", 10, "regular", INK)
-    draw_text(ix, y + 33, "Left out because they happened on an earlier day:",
+    draw_text(ix, y + 31, "Left out because they happened on an earlier day:",
               10, "bold", INK)
     col_w = 188
     col_x = [ix, ix + 196, ix + 392]
-    max_bottom = y + 43
+    max_bottom = y + 41
     for ci, col in enumerate(DATECHECK_COLS):
-        cy = y + 43
+        cy = y + 41
         for (text, date) in col:
             used = draw_datecheck_item(col_x[ci], cy, text, date, col_w)
             cy += used + 7
         max_bottom = max(max_bottom, cy)
     # v2.8: "Also covered" GREY -> (80,80,80) for contrast.
-    draw_text(ix, max_bottom + 5, DATECHECK_ALSO, 10, "regular", (80, 80, 80))
-    return max_bottom + 5 + 12
+    draw_text(ix, max_bottom + 4, DATECHECK_ALSO, 10, "regular", (80, 80, 80))
+    return max_bottom + 4 + 12
 
 
 def draw_footer(y):
