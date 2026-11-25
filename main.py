@@ -806,6 +806,12 @@ def art_flags(x, y, w, h):
     # pale wall panel behind the flags
     fill_rect(x, y, x + w, y + h * 0.30, (226, 220, 208))
     draw_line(x, y + h * 0.30, x + w, y + h * 0.30, (200, 192, 178), 1)
+    # wood wainscot band behind the negotiators (v2.6: fills the void
+    # between the flags and the table; vertical seams give panel depth)
+    fill_rect(x, y + h * 0.30, x + w, y + h * 0.55, (208, 190, 162))
+    for sx in range(int(x + 24), int(x + w - 8), 24):
+        draw_line(sx, y + h * 0.30, sx, y + h * 0.55, (186, 166, 138), 1)
+    draw_line(x, y + h * 0.55, x + w, y + h * 0.55, (186, 166, 138), 1)
     # four flags: UA, EU, US, RU (left to right), kept clear of the badge
     flag_cols = [[(24, 74, 135), (240, 200, 40)],
                  [(24, 74, 135), (24, 74, 135)],
@@ -834,6 +840,10 @@ def art_flags(x, y, w, h):
     for i in range(4):
         cx = x + 24 + i * 46
         hy = y + h * 0.48
+        # chair back behind the negotiator (v2.6: peeks above the suit
+        # and at its sides, so the figures sit in chairs, not in a void)
+        fill_rect(cx - 11, hy + 1, cx + 11, y + h - 12, (58, 52, 48))
+        draw_rect_outline(cx - 11, hy + 1, cx + 11, y + h - 12, INK, 1)
         fill_circle(cx, hy, 6, skins[i])
         # hair cap
         fill_poly([(cx - 6, hy - 2), (cx + 6, hy - 2), (cx + 5, hy - 6),
@@ -863,6 +873,12 @@ def art_flags(x, y, w, h):
     draw_rect_outline(x + w // 2 - 13, y + h - 18, x + w // 2 + 13,
                       y + h - 12, INK, 1)
     draw_line(x + w // 2 - 9, y + h - 15, x + w // 2 + 9, y + h - 15, GREY, 1)
+    # water carafe on the tabletop (v2.6: fills the empty table between
+    # negotiators 1 and 2; clear of the glass, nameplates and document)
+    fill_rect(x + w * 0.20, y + h - 21, x + w * 0.20 + 6, y + h - 12,
+              (200, 220, 235))
+    draw_rect_outline(x + w * 0.20, y + h - 21, x + w * 0.20 + 6,
+                      y + h - 12, INK, 1)
     for mx in (x + w * 0.16, x + w * 0.92):
         draw_line(mx, y + h - 12, mx, y + h - 20, INK, 1)
         fill_circle(mx, y + h - 21, 3, INK)
@@ -933,31 +949,51 @@ def art_ballot(x, y, w, h):
     for (sx, sy) in [(0.08, 0.12), (0.16, 0.06), (0.52, 0.10), (0.58, 0.05),
                       (0.24, 0.18), (0.62, 0.20)]:
         fill_circle(x + w * sx, y + h * sy, 2, (240, 180, 40))
-    # dome: arc polygon (v2.5: darkened again so it reads against the
-    # pale sky at display size)
+    # dome: taller arc polygon with ribs (v2.6: 18 -> 20 tall, 24 -> 26
+    # wide, so it reads as a dome, not a hill; pole still tops at y+1.6)
     pts = []
     for a in range(0, 181, 10):
         t = math.radians(a)
-        pts.append((cx + 24 * math.cos(t), base - 18 * math.sin(t)))
+        pts.append((cx + 26 * math.cos(t), base - 20 * math.sin(t)))
     fill_poly(pts, (128, 144, 172))
     for a, b in zip(pts, pts[1:]):
         draw_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), INK, 2)
+    # dome ribs from the apex down to the drum
+    for rx in (-13, 13):
+        draw_line(cx, base - 20, cx + rx, base, (100, 116, 144), 1)
+    for rx in (-22, 22):
+        draw_line(cx, base - 20, cx + rx, base - 3, (100, 116, 144), 1)
     # waving flag on a pole above the dome (pole top stays inside the art
     # rect: base-26 is y+1.6, never above y)
-    draw_line(cx, base - 18, cx, base - 26, INK, 1)
+    draw_line(cx, base - 20, cx, base - 26, INK, 1)
     fill_poly([(cx, base - 26), (cx + 13, base - 24), (cx + 10, base - 21),
                (cx + 13, base - 18), (cx, base - 21)], (180, 40, 40))
     fill_poly([(cx, base - 21), (cx + 13, base - 18), (cx + 10, base - 15),
                (cx, base - 15)], WHITE)
     # blue canton at the flag's hoist
     fill_rect(cx, base - 26, cx + 5, base - 21, (24, 74, 135))
-    # drum + columns (7, widened to 5px) + plinth
+    # drum with fluting + columns (v2.6: 7 thin bars -> 5 distinct
+    # columns with capitals, so they read as columns, not stripes)
     fill_rect(cx - 30, base, cx + 30, y + h * 0.66, (128, 144, 172))
-    for i in range(7):
-        colx = cx - 27 + i * 9
-        fill_rect(colx, y + h * 0.66, colx + 5, y + h * 0.86, WHITE)
-        draw_rect_outline(colx, y + h * 0.66, colx + 5, y + h * 0.86, INK, 1)
+    for fx in range(int(cx - 24), int(cx + 25), 6):
+        draw_line(fx, int(base), fx, int(y + h * 0.66), (110, 126, 154), 1)
+    for i in range(5):
+        colx = cx - 27 + i * 12
+        fill_rect(colx, y + h * 0.66, colx + 6, y + h * 0.86, WHITE)
+        draw_rect_outline(colx, y + h * 0.66, colx + 6, y + h * 0.86, INK, 1)
+        # capital + base bars
+        fill_rect(colx - 1, y + h * 0.66, colx + 7, y + h * 0.66 + 2,
+                  (150, 158, 170))
+        fill_rect(colx - 1, y + h * 0.86 - 2, colx + 7, y + h * 0.86,
+                  (150, 158, 170))
     fill_rect(cx - 34, y + h * 0.86, cx + 34, y + h * 0.92, (170, 176, 186))
+    # low side wings with windows (v2.6: make it read as a building, not
+    # a dome on a block); right wing stops clear of the ballot box
+    for (wx0, wx1) in [(x + 4, x + 26), (x + w * 0.62, x + w * 0.72)]:
+        fill_rect(wx0, y + h * 0.66, wx1, y + h * 0.86, (150, 166, 192))
+        draw_rect_outline(wx0, y + h * 0.66, wx1, y + h * 0.86, INK, 1)
+        for wxx in (wx0 + 4, wx1 - 8):
+            fill_rect(wxx, y + h * 0.72, wxx + 4, y + h * 0.80, INK)
     # steps: two tiers down to the ground line
     fill_rect(cx - 42, y + h * 0.92, cx + 42, y + h * 0.96, (150, 158, 170))
     fill_rect(cx - 48, y + h * 0.96, cx + 48, y + h - 1, (128, 136, 150))
@@ -1075,6 +1111,12 @@ def art_fence(x, y, w, h):
     """Estonia border in winter: watchtower, fence, checkpoint, snow."""
     fill_rect(x, y, x + w, y + h * 0.60, (206, 220, 232))
     fill_rect(x, y + h * 0.60, x + w, y + h, WHITE)
+    # distant hills behind the fence (v2.6: depth, so the border is not
+    # a flat white field)
+    fill_poly([(x, y + h * 0.60), (x + w * 0.20, y + h * 0.44),
+               (x + w * 0.38, y + h * 0.60)], (168, 184, 200))
+    fill_poly([(x + w * 0.30, y + h * 0.60), (x + w * 0.52, y + h * 0.46),
+               (x + w * 0.70, y + h * 0.60)], (178, 192, 206))
     # snowflakes
     for (sx, sy) in [(0.10, 0.12), (0.25, 0.06), (0.40, 0.16), (0.55, 0.08),
                       (0.70, 0.14), (0.85, 0.06), (0.94, 0.20), (0.18, 0.26)]:
@@ -1098,10 +1140,17 @@ def art_fence(x, y, w, h):
     draw_line((tx0 + tx1) // 2, y + h * 0.12, (tx0 + tx1) // 2, y + h * 0.06,
               INK, 1)
     fill_circle((tx0 + tx1) // 2, y + h * 0.06, 2, RED)
-    # fence: posts + rails + barbed zigzag, now spanning to the booth
-    for i in range(7):
-        bx = x + 8 + i * 15
-        fill_rect(bx, y + h * 0.44, bx + 3, y + h * 0.92, INK)
+    # one small pine on the far right (v2.6), clear of the booth and
+    # the lamp post (the booth paints over its left tip)
+    fill_poly([(x + w * 0.845, y + h * 0.50), (x + w * 0.845 - 6, y + h * 0.62),
+               (x + w * 0.845 + 6, y + h * 0.62)], (30, 90, 60))
+    fill_rect(x + w * 0.845 - 1, y + h * 0.62, x + w * 0.845 + 1,
+              y + h * 0.68, (60, 44, 30))
+    # fence: fewer, thicker posts (v2.6: 7 thin bars read as a barcode)
+    # + rails + two barbed zigzag strands
+    for i in range(5):
+        bx = x + 8 + i * 20
+        fill_rect(bx, y + h * 0.44, bx + 4, y + h * 0.92, INK)
     draw_line(x + 6, y + h * 0.50, x + w * 0.58, y + h * 0.50, INK, 2)
     draw_line(x + 6, y + h * 0.72, x + w * 0.58, y + h * 0.72, INK, 2)
     pts = []
@@ -1109,6 +1158,11 @@ def art_fence(x, y, w, h):
         pts.append((x + 6 + i * 8, y + h * 0.44 - (4 if i % 2 == 0 else 0)))
     for a, b in zip(pts, pts[1:]):
         draw_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), INK, 1)
+    pts = []
+    for i in range(13):
+        pts.append((x + 6 + i * 8, y + h * 0.61 - (3 if i % 2 == 0 else 0)))
+    for a, b in zip(pts, pts[1:]):
+        draw_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), (90, 100, 110), 1)
     # snow drifts along the fence base (v2.5: centres moved to 0.90h and
     # radii capped at 4 so no drift paints below the art rect; the road
     # band below covers their middles, leaving mounds above and below it)
@@ -1120,6 +1174,18 @@ def art_fence(x, y, w, h):
     for tx in range(int(x + 8), int(x + w - 8), 12):
         fill_rect(tx, y + h * 0.90, tx + 6, y + h * 0.92, (160, 166, 174))
         fill_rect(tx, y + h * 0.94, tx + 6, y + h * 0.96, (160, 166, 174))
+    # car stopped at the crossing (v2.6: focal subject — the border is
+    # shut, traffic waits); clear of the pines, the tower and the booth
+    carx = x + w * 0.10
+    fill_rect(carx, y + h * 0.80, carx + 34, y + h * 0.88, (30, 60, 110))
+    fill_rect(carx + 8, y + h * 0.74, carx + 22, y + h * 0.80, (30, 60, 110))
+    fill_rect(carx + 10, y + h * 0.755, carx + 14, y + h * 0.79,
+              (150, 200, 230))
+    fill_rect(carx + 16, y + h * 0.755, carx + 20, y + h * 0.79,
+              (150, 200, 230))
+    fill_circle(carx + 8, y + h * 0.88, 2, INK)
+    fill_circle(carx + 26, y + h * 0.88, 2, INK)
+    fill_circle(carx + 34, y + h * 0.84, 1, (255, 220, 120))
     # checkpoint booth, right, with a lit window
     fill_rect(x + w * 0.62, y + h * 0.34, x + w * 0.82, y + h * 0.86, WHITE)
     draw_rect_outline(x + w * 0.62, y + h * 0.34, x + w * 0.82, y + h * 0.86,
@@ -1450,7 +1516,7 @@ def draw_lead_card(x, y, num, region, head, deck, subdeck, sources, badge, art):
     draw_wrapped(x + 8, y + 174, deck, 14, "regular", INK, w - 16, 17, 2,
                  tracking=0.3)
     draw_wrapped(x + 8, y + 206, subdeck, 11, "regular", GREY, w - 16, 13, 2,
-                 tracking=0.3)
+                 tracking=0.4)
     # v2.5: sources LGREY -> GREY for contrast (still 9px, still 3.75px
     # clear of the card edge).
     draw_text(x + 8, y + 230, sources, 9, "regular", GREY)
@@ -1490,10 +1556,10 @@ def draw_small_card(x, y, num, region, head, deck, sources, badge, art):
         else:
             draw_callout(x + 6, y + 24, call, 9)
     draw_wrapped(x + 8, y + 66, head, 16, "bold", INK, w - 16, 18, 2)
-    # v2.3: deck 10->12 / leading 11->13 / tracking 0.3 (measured: still
-    # <=2 lines for all ten small decks; 4px clear to the sources line).
+    # v2.6: deck tracking 0.3 -> 0.4 (probe: still <=2 lines for all ten
+    # small decks; lead decks stay 0.3 — lead 3 flips to 3 lines at 0.4).
     draw_wrapped(x + 8, y + 100, deck, 12, "regular", INK, w - 16, 13, 2,
-                 tracking=0.3)
+                 tracking=0.4)
     # v2.5: sources 8 -> 9px and LGREY -> GREY (widths probed: max 104.7
     # of 176px, so nothing wraps or clips).
     draw_text(x + 8, y + 126, sources, 9, "regular", GREY)
@@ -1518,17 +1584,19 @@ def draw_also_list(x0, y0):
             # title + source on one line (title 11->12 in v2.3; measured
             # gap to the source stays >=86px for every item)
             draw_text(cx + 20, cy + 9, title, 12, "bold", INK)
-            # v2.5: source LGREY -> darker grey (still 9px); desc GREY ->
-            # (70,70,70) for contrast. Desc stays 11px: the probe showed
+            # v2.6: source (88,88,88) -> (80,80,80); desc (70,70,70) ->
+            # (60,60,60) for contrast. Desc stays 11px: the probe showed
             # 12px flips 5 items to 2 lines and pushes also_bottom +39px,
-            # which would crush the DATE CHECK + map band.
+            # and tracking 0.4 flips item 16 (also_bottom +13px) — both
+            # rejected. Item gap 4 -> 2: the 5px it frees funds the
+            # DATE CHECK row gap below (band bottom is pinned at 1006).
             draw_text_right(cx + col_w, cy + 9, source, 9, "regular",
-                            (88, 88, 88))
+                            (80, 80, 80))
             # desc, wrapped under the title (11px, leading 13, tracking
             # 0.3; measured: same line counts as v2.2 for every item)
             lines = draw_wrapped(cx + 20, cy + 20, desc, 11, "regular",
-                                 (70, 70, 70), col_w - 20, 13, tracking=0.3)
-            cy += 10 + 13 * len(lines) + 4
+                                 (60, 60, 60), col_w - 20, 13, tracking=0.3)
+            cy += 10 + 13 * len(lines) + 2
         bottom = max(bottom, cy)
     return bottom
 
@@ -1558,25 +1626,27 @@ def draw_datecheck(x, y, w, h):
     fill_rect(x, y, x + w, y + h, (253, 248, 240))
     draw_rect_outline(x, y, x + w, y + h, RED, 2)
     ix = x + 10
-    # v2.5: item gap 3 -> 4 for breathing room, funded by starting the
-    # items 2px higher (y+47) and the "Also covered" line 2px closer
-    # (+5): measured bottom clearance stays ~3.5px. Font stays 10px:
-    # 11px flips items to extra date lines and the box overflows.
+    # v2.6: item gap 4 -> 5 for breathing room, funded by compressing
+    # the header (rule y+25 -> 23, "Left out" y+37 -> 34, items y+47
+    # -> 44) and by the also-list gap 4 -> 2 above (band_y moves up
+    # 10px: also_bottom 820 -> 810). Probe math: "Also covered"
+    # clearance to the bottom border ~8.8px (v2.5 was 1.8px — below the
+    # 2px floor). Font stays 10px: tracking 0.3 overflows the box.
     draw_text(ix, y + 12, "DATE CHECK \u2014 WHAT IS NOT IN THIS IMAGE",
               13, "bold", RED)
-    draw_text(ix, y + 25,
+    draw_text(ix, y + 23,
               "Rule: only stories first reported on Tuesday 24 November 2026 "
               "are in the main list.", 10, "regular", INK)
-    draw_text(ix, y + 37, "Left out because they happened on an earlier day:",
+    draw_text(ix, y + 34, "Left out because they happened on an earlier day:",
               10, "bold", INK)
     col_w = 188
     col_x = [ix, ix + 196, ix + 392]
-    max_bottom = y + 47
+    max_bottom = y + 44
     for ci, col in enumerate(DATECHECK_COLS):
-        cy = y + 47
+        cy = y + 44
         for (text, date) in col:
             used = draw_datecheck_item(col_x[ci], cy, text, date, col_w)
-            cy += used + 4
+            cy += used + 5
         max_bottom = max(max_bottom, cy)
     draw_text(ix, max_bottom + 5, DATECHECK_ALSO, 10, "regular", GREY)
     return max_bottom + 5 + 12
