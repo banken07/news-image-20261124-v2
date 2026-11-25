@@ -455,7 +455,9 @@ def draw_callout(x, y_top, text, size=10):
     """Dark pill, left-aligned at x, top at y_top. Returns width."""
     pad = 6 if size >= 10 else 5
     w = int(math.ceil(text_width(text, size, "bold"))) + pad * 2
-    h = 14 if size >= 10 else 11
+    # v2.5: small pills run at 9px now, so they get a 12px-tall pill
+    # (9px caps + comma descender still fit with room to spare).
+    h = 14 if size >= 10 else (12 if size == 9 else 11)
     fill_rect(x, y_top, x + w, y_top + h, DARK)
     draw_rect_outline(x, y_top, x + w, y_top + h, GOLD, 1)
     draw_text(x + pad, y_top + h - 3, text, size, "bold", WHITE)
@@ -542,7 +544,11 @@ def art_drone(x, y, w, h):
     fill_circle(x + w * 0.82, y + h * 0.32, 7, (255, 244, 200))
     draw_circle_ring(x + w * 0.82, y + h * 0.32, 10, (255, 244, 200))
     # searchlight beams from the ground to the drone
-    cx, cy = x + w * 0.50, y + h * 0.40
+    # v2.5: drone centre shifted right (0.50 -> 0.60w) and arms shortened
+    # (0.16 -> 0.10w, rotors r 8 -> 7) so the lead-2 callout pill no
+    # longer covers the left arm: measured clearances now arm 12px,
+    # body 2.6px, right rotor 2.2px from the REPORTED badge.
+    cx, cy = x + w * 0.60, y + h * 0.40
     fill_poly([(x + w * 0.18, y + h - 2), (x + w * 0.24, y + h - 2),
                (cx - 6, cy + 4), (cx - 14, cy + 4)], (240, 230, 180))
     fill_poly([(x + w * 0.88, y + h - 2), (x + w * 0.94, y + h - 2),
@@ -556,10 +562,10 @@ def art_drone(x, y, w, h):
     fill_circle(rx, ry, 3, (120, 220, 140))
     # drone: arms, rotors, body, red eye
     for (dx, dy) in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
-        ax, ay = cx + dx * w * 0.16, cy + dy * h * 0.22
+        ax, ay = cx + dx * w * 0.10, cy + dy * h * 0.22
         draw_line(int(cx), int(cy), int(ax), int(ay), (228, 231, 236), 3)
-        fill_circle(int(ax), int(ay), 8, (30, 110, 190))
-        draw_circle_ring(int(ax), int(ay), 8, WHITE)
+        fill_circle(int(ax), int(ay), 7, (30, 110, 190))
+        draw_circle_ring(int(ax), int(ay), 7, WHITE)
         fill_circle(int(ax), int(ay), 3, WHITE)
     fill_poly([(cx - 24, cy - 7), (cx + 24, cy - 7), (cx + 16, cy + 8),
                (cx - 16, cy + 8)], (238, 240, 244))
@@ -647,10 +653,11 @@ def art_cross(x, y, w, h):
 
 def art_flame(x, y, w, h):
     """Cikande factory fire: structure, bright flames, dark smoke."""
-    fill_rect(x, y, x + w, y + h, (86, 68, 56))
+    # v2.5: brighter dusty sky + horizon so the hall reads as a building
+    fill_rect(x, y, x + w, y + h, (118, 92, 66))
     # lighter horizon band behind the factory so the black silhouette
     # (and its sawtooth roof) reads as a building, never a hill
-    fill_rect(x, y + int(h * 0.44), x + w, y + int(h * 0.60), (168, 104, 48))
+    fill_rect(x, y + int(h * 0.44), x + w, y + int(h * 0.60), (190, 120, 55))
     # warm glow behind the flames
     fill_circle(x + w * 0.42, y + h * 0.55, 26, (120, 60, 20))
     fill_circle(x + w * 0.42, y + h * 0.55, 16, (170, 80, 20))
@@ -662,25 +669,32 @@ def art_flame(x, y, w, h):
         fill_circle(x + w * sx, y + h * sy, sr, (38, 34, 30))
     # second chimney, left, with its own smoke puff
     fill_rect(x + w * 0.10, y + h * 0.30, x + w * 0.10 + 8, y + h - 4,
-              (18, 18, 22))
+              (34, 32, 32))
     fill_circle(x + w * 0.14, y + h * 0.24, 5, (38, 34, 30))
     fill_circle(x + w * 0.14, y + h * 0.24, 4, (60, 56, 50))
     # factory silhouette: main hall + sawtooth roof + chimney
     fill_poly([(x + 8, y + h * 0.52), (x + 26, y + h * 0.36),
                (x + 44, y + h * 0.52), (x + 62, y + h * 0.36),
                (x + 80, y + h * 0.52), (x + w - 34, y + h * 0.52),
-               (x + w - 34, y + h - 4), (x + 8, y + h - 4)], (18, 18, 22))
+               (x + w - 34, y + h - 4), (x + 8, y + h - 4)], (34, 32, 32))
     # bright roofline edge so the silhouette reads against the glow
     draw_line(x + 8, y + h * 0.52, x + 26, y + h * 0.36, (240, 140, 40), 1)
     draw_line(x + 26, y + h * 0.36, x + 44, y + h * 0.52, (240, 140, 40), 1)
     draw_line(x + 44, y + h * 0.52, x + 62, y + h * 0.36, (240, 140, 40), 1)
     draw_line(x + 62, y + h * 0.36, x + 80, y + h * 0.52, (240, 140, 40), 1)
-    fill_rect(x + w - 30, y + h * 0.18, x + w - 20, y + h - 4, (18, 18, 22))
+    fill_rect(x + w - 30, y + h * 0.18, x + w - 20, y + h - 4, (34, 32, 32))
     fill_circle(x + w - 25, y + h * 0.48, 6, (38, 34, 30))
     # glowing windows, four now, with hot cores
     for wx in (x + 16, x + 40, x + 64, x + 92):
         fill_rect(wx, y + h * 0.66, wx + 12, y + h * 0.82, (250, 160, 30))
         fill_rect(wx + 3, y + h * 0.70, wx + 9, y + h * 0.78, (255, 220, 90))
+    # small high windows + a glowing doorway, so the hall reads as a
+    # building even where the flames do not reach (doorway sits between
+    # windows 3 and 4, clear of the truck and the flames)
+    for wx in (x + 22, x + 52, x + 82, x + 110):
+        fill_rect(wx, y + h * 0.56, wx + 8, y + h * 0.62, (250, 160, 30))
+    fill_rect(x + 78, y + h * 0.78, x + 90, y + h - 4, (255, 190, 60))
+    draw_rect_outline(x + 78, y + h * 0.78, x + 90, y + h - 4, (120, 60, 20), 1)
     # flames: four layered tongues from the roof, taller and brighter
     fx = x + w * 0.42
     fill_poly([(fx, y + 1), (fx + 16, y + h * 0.42), (fx + 9, y + h * 0.55),
@@ -701,7 +715,8 @@ def art_flame(x, y, w, h):
                   (250, 180, 40))
     # embers
     for (ex, ey) in [(0.60, 0.20), (0.68, 0.32), (0.30, 0.18), (0.55, 0.08),
-                      (0.74, 0.14), (0.24, 0.06)]:
+                      (0.74, 0.14), (0.24, 0.06), (0.80, 0.10), (0.15, 0.14),
+                      (0.48, 0.05)]:
         fill_circle(x + w * ex, y + h * ey, 2, (255, 200, 60))
     # ground glow band + ground line (drawn before the truck)
     fill_rect(x + 4, y + h - 6, x + w - 4, y + h - 4, (200, 80, 20))
@@ -713,6 +728,8 @@ def art_flame(x, y, w, h):
     fill_rect(tx0 + 24, ty0 - 4, tx0 + 34, ty0, (180, 40, 32))
     fill_rect(tx0 + 26, ty0 - 3, tx0 + 32, ty0 - 1, (150, 200, 240))
     draw_line(tx0 + 4, ty0 - 2, tx0 + 22, ty0 - 7, (200, 200, 205), 2)
+    # white stripe along the truck body
+    fill_rect(tx0 + 3, ty0 + 3, tx0 + 22, ty0 + 5, WHITE)
     for wx in (tx0 + 6, tx0 + 24):
         fill_circle(wx, ty0 + 9, 2, (16, 16, 20))
         fill_circle(wx, ty0 + 9, 1, (180, 180, 185))
@@ -723,7 +740,8 @@ def art_boat(x, y, w, h):
     fill_rect(x, y, x + w, y + h * 0.55, (250, 200, 120))
     fill_rect(x, y, x + w, y + int(h * 0.10), (255, 226, 160))
     fill_rect(x, y + h * 0.55, x + w, y + h, (226, 170, 110))
-    # sun, low on the horizon (clear of the badge), with rays
+    # sun, low on the horizon (clear of the badge), with rays + soft glow
+    fill_circle(x + w * 0.68, y + h * 0.58, 16, (255, 230, 150))
     fill_circle(x + w * 0.68, y + h * 0.58, 8, (255, 240, 180))
     draw_circle_ring(x + w * 0.68, y + h * 0.58, 11, (255, 240, 180))
     for ang in (10, 55, 100, 145, 180, -145, -100):
@@ -733,11 +751,20 @@ def art_boat(x, y, w, h):
         x2 = x + w * 0.68 + 17 * math.cos(t)
         y2 = y + h * 0.58 + 17 * math.sin(t)
         draw_line(int(x1), int(y1), int(x2), int(y2), (255, 240, 180), 1)
-    # distant hills
+    # distant hills, two layers so the horizon has depth
+    fill_poly([(x, y + h * 0.56), (x + w * 0.30, y + h * 0.46),
+               (x + w * 0.60, y + h * 0.56), (x + w * 0.85, y + h * 0.48),
+               (x + w, y + h * 0.56), (x + w, y + h * 0.62),
+               (x, y + h * 0.62)], (150, 140, 100))
     fill_poly([(x, y + h * 0.62), (x + w * 0.25, y + h * 0.50),
                (x + w * 0.5, y + h * 0.62), (x + w * 0.75, y + h * 0.52),
                (x + w, y + h * 0.60), (x + w, y + h), (x, y + h)],
               (120, 110, 70))
+    # birds in the dawn sky
+    for (bx, by) in [(0.15, 0.20), (0.25, 0.12), (0.33, 0.22)]:
+        cx, cy = x + w * bx, y + h * by
+        draw_line(int(cx - 4), int(cy), int(cx), int(cy + 3), INK, 1)
+        draw_line(int(cx), int(cy + 3), int(cx + 4), int(cy), INK, 1)
     # road: perspective band to the horizon
     fill_poly([(x + w * 0.42, y + h * 0.62), (x + w * 0.58, y + h * 0.62),
                (x + w * 0.78, y + h), (x + w * 0.22, y + h)], (232, 214, 178))
@@ -748,13 +775,15 @@ def art_boat(x, y, w, h):
         dx = x + w * 0.53
         dy = y + h * (0.62 + t * 0.38)
         fill_rect(dx - 1, dy, dx + 1, dy + 4, (250, 244, 225))
-    # walking figures, near to far (middle walker in a light shirt;
-    # two small distant walkers near the horizon)
-    for (fx, fy, s, shirt) in [(0.36, 0.76, 1.05, (40, 32, 28)),
+    # walking figures, near to far (two in coloured shirts now, so the
+    # group reads as people, not dark silhouettes; a small child walks
+    # beside the middle walker; two small distant walkers near the horizon)
+    for (fx, fy, s, shirt) in [(0.36, 0.76, 1.05, (30, 90, 140)),
                                 (0.50, 0.68, 0.8, (245, 240, 225)),
-                                (0.62, 0.76, 1.2, (40, 32, 28)),
+                                (0.62, 0.76, 1.2, (140, 50, 50)),
                                 (0.44, 0.645, 0.45, (40, 32, 28)),
-                                (0.56, 0.645, 0.45, (40, 32, 28))]:
+                                (0.56, 0.645, 0.45, (40, 32, 28)),
+                                (0.55, 0.72, 0.55, (240, 180, 60))]:
         px, py = x + w * fx, y + h * fy
         fill_circle(px, py - 9 * s, 3 * s, (40, 32, 28))
         fill_poly([(px - 4 * s, py - 6 * s), (px + 4 * s, py - 6 * s),
@@ -794,17 +823,21 @@ def art_flags(x, y, w, h):
         if i == 1:  # EU stars
             for (dx, dy) in [(4, 3), (12, 3), (8, 8)]:
                 fill_circle(fx + dx, fy + dy, 1, WHITE)
+        if i == 2:  # US blue canton over the red stripe's hoist
+            fill_rect(fx + 1, fy, fx + 7, fy + fh // 2, (24, 74, 135))
     # four seated negotiators behind the table: heads + suited shoulders
+    # (v2.5: heads r 5 -> 6 with a smaller hair cap, so faces read as
+    # people instead of dark blobs at display size)
     suits = [(30, 36, 52), (52, 44, 40), (24, 74, 135), (60, 52, 46)]
     skins = [(232, 190, 150), (210, 170, 135), (240, 200, 165),
              (190, 150, 120)]
     for i in range(4):
         cx = x + 24 + i * 46
         hy = y + h * 0.48
-        fill_circle(cx, hy, 5, skins[i])
+        fill_circle(cx, hy, 6, skins[i])
         # hair cap
-        fill_poly([(cx - 5, hy - 1), (cx + 5, hy - 1), (cx + 4, hy - 5),
-                   (cx - 4, hy - 5)], (40, 32, 28))
+        fill_poly([(cx - 6, hy - 2), (cx + 6, hy - 2), (cx + 5, hy - 6),
+                   (cx - 5, hy - 6)], (40, 32, 28))
         # shoulders / suit
         fill_poly([(cx - 9, y + h * 0.76), (cx + 9, y + h * 0.76),
                    (cx + 7, hy + 5), (cx - 7, hy + 5)], suits[i])
@@ -815,6 +848,12 @@ def art_flags(x, y, w, h):
     fill_rect(x + 8, y + h - 12, x + w - 8, y + h - 6, (120, 82, 52))
     draw_line(x + 16, y + h - 6, x + 16, y + h - 2, INK, 2)
     draw_line(x + w - 16, y + h - 6, x + w - 16, y + h - 2, INK, 2)
+    # table skirt (front panel) below the tabletop
+    fill_rect(x + 8, y + h - 6, x + w - 8, y + h - 2, (96, 66, 42))
+    # water glasses on the tabletop (clear of shoulders, doc and mics)
+    for gx in (x + w * 0.28, x + w * 0.72):
+        fill_rect(gx, y + h - 19, gx + 5, y + h - 12, (220, 235, 245))
+        draw_rect_outline(gx, y + h - 19, gx + 5, y + h - 12, INK, 1)
     # nameplates on the table front
     for nx in (x + 30, x + w // 2 - 6, x + w - 44):
         fill_rect(nx, y + h - 11, nx + 12, y + h - 7, WHITE)
@@ -826,7 +865,7 @@ def art_flags(x, y, w, h):
     draw_line(x + w // 2 - 9, y + h - 15, x + w // 2 + 9, y + h - 15, GREY, 1)
     for mx in (x + w * 0.16, x + w * 0.92):
         draw_line(mx, y + h - 12, mx, y + h - 20, INK, 1)
-        fill_circle(mx, y + h - 21, 2, INK)
+        fill_circle(mx, y + h - 21, 3, INK)
 
 
 def art_tanker(x, y, w, h):
@@ -867,16 +906,19 @@ def art_tanker(x, y, w, h):
     draw_line(int(hx1), int(hy + 10), int(hx1 + 10), int(hy + 8),
               (220, 235, 245), 2)
     # sun with short rays (downward/side only: the sun sits near the top)
-    fill_circle(x + w * 0.50, y + h * 0.16, 6, (240, 180, 40))
+    # v2.5: sun moved right (0.50 -> 0.58w) so the wider 9px pill no
+    # longer clips its disc; second gull lowered off the top edge.
+    fill_circle(x + w * 0.58, y + h * 0.16, 6, (240, 180, 40))
     for ang in (20, 60, 100, 140, 180):
         t = math.radians(ang)
-        x1 = x + w * 0.50 + 8 * math.cos(t)
+        x1 = x + w * 0.58 + 8 * math.cos(t)
         y1 = y + h * 0.16 + 8 * math.sin(t)
-        x2 = x + w * 0.50 + 12 * math.cos(t)
+        x2 = x + w * 0.58 + 12 * math.cos(t)
         y2 = y + h * 0.16 + 12 * math.sin(t)
         draw_line(int(x1), int(y1), int(x2), int(y2), (240, 180, 40), 1)
     # gulls in the sky, right of the sun and clear of the CLAIM badge
-    for (gx, gy) in [(0.62, 0.08), (0.70, 0.05)]:
+    # (v2.5: re-spaced after the sun moved right)
+    for (gx, gy) in [(0.68, 0.08), (0.72, 0.16)]:
         cx, cy = x + w * gx, y + h * gy
         draw_line(int(cx - 4), int(cy), int(cx), int(cy + 3), INK, 1)
         draw_line(int(cx), int(cy + 3), int(cx + 4), int(cy), INK, 1)
@@ -888,14 +930,16 @@ def art_ballot(x, y, w, h):
     cx = x + w * 0.42
     base = y + h * 0.60
     # stars in the sky (left of the badge, which covers x+119 rightwards)
-    for (sx, sy) in [(0.08, 0.12), (0.16, 0.06), (0.52, 0.10), (0.58, 0.05)]:
+    for (sx, sy) in [(0.08, 0.12), (0.16, 0.06), (0.52, 0.10), (0.58, 0.05),
+                      (0.24, 0.18), (0.62, 0.20)]:
         fill_circle(x + w * sx, y + h * sy, 2, (240, 180, 40))
-    # dome: arc polygon (mid grey-blue so it reads against the pale sky)
+    # dome: arc polygon (v2.5: darkened again so it reads against the
+    # pale sky at display size)
     pts = []
     for a in range(0, 181, 10):
         t = math.radians(a)
         pts.append((cx + 24 * math.cos(t), base - 18 * math.sin(t)))
-    fill_poly(pts, (150, 166, 192))
+    fill_poly(pts, (128, 144, 172))
     for a, b in zip(pts, pts[1:]):
         draw_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), INK, 2)
     # waving flag on a pole above the dome (pole top stays inside the art
@@ -905,12 +949,14 @@ def art_ballot(x, y, w, h):
                (cx + 13, base - 18), (cx, base - 21)], (180, 40, 40))
     fill_poly([(cx, base - 21), (cx + 13, base - 18), (cx + 10, base - 15),
                (cx, base - 15)], WHITE)
-    # drum + columns (7) + plinth
-    fill_rect(cx - 30, base, cx + 30, y + h * 0.66, (150, 166, 192))
+    # blue canton at the flag's hoist
+    fill_rect(cx, base - 26, cx + 5, base - 21, (24, 74, 135))
+    # drum + columns (7, widened to 5px) + plinth
+    fill_rect(cx - 30, base, cx + 30, y + h * 0.66, (128, 144, 172))
     for i in range(7):
         colx = cx - 27 + i * 9
-        fill_rect(colx, y + h * 0.66, colx + 4, y + h * 0.86, WHITE)
-        draw_rect_outline(colx, y + h * 0.66, colx + 4, y + h * 0.86, INK, 1)
+        fill_rect(colx, y + h * 0.66, colx + 5, y + h * 0.86, WHITE)
+        draw_rect_outline(colx, y + h * 0.66, colx + 5, y + h * 0.86, INK, 1)
     fill_rect(cx - 34, y + h * 0.86, cx + 34, y + h * 0.92, (170, 176, 186))
     # steps: two tiers down to the ground line
     fill_rect(cx - 42, y + h * 0.92, cx + 42, y + h * 0.96, (150, 158, 170))
@@ -967,10 +1013,10 @@ def art_talks(x, y, w, h):
     """Doha talks: West Bay skyline at dusk, long table, two flags."""
     fill_rect(x, y, x + w, y + h, (252, 224, 182))
     fill_rect(x, y, x + w, y + int(h * 0.12), (255, 238, 205))
-    # crescent moon, top centre-left, with a glow ring
-    fill_circle(x + w * 0.30, y + h * 0.16, 6, (255, 244, 200))
-    fill_circle(x + w * 0.30 + 3, y + h * 0.16 - 1, 5, (252, 224, 182))
-    draw_circle_ring(x + w * 0.30, y + h * 0.16, 9, (255, 244, 200))
+    # crescent moon, top centre-left, with a glow ring (v2.5: r 6 -> 7)
+    fill_circle(x + w * 0.30, y + h * 0.16, 7, (255, 244, 200))
+    fill_circle(x + w * 0.30 + 3, y + h * 0.16 - 1, 6, (252, 224, 182))
+    draw_circle_ring(x + w * 0.30, y + h * 0.16, 10, (255, 244, 200))
     # skyline silhouettes
     towers = [(0.04, 0.55, 0.10), (0.16, 0.42, 0.09), (0.27, 0.62, 0.10),
               (0.40, 0.48, 0.09), (0.52, 0.58, 0.11), (0.65, 0.40, 0.09),
@@ -981,12 +1027,14 @@ def art_talks(x, y, w, h):
     # pointed tower, centre-right
     fill_poly([(x + w * 0.65, y + h * 0.40), (x + w * 0.69, y + h * 0.30),
                (x + w * 0.74, y + h * 0.40)], (60, 52, 66))
-    # lit windows (one per tower face, checked against the tower list)
+    # lit windows (v2.5: 4px now, four more, all checked against the
+    # tower list so none floats off a tower face)
     for (wx, wy) in [(0.06, 0.62), (0.18, 0.50), (0.20, 0.60), (0.29, 0.68),
                       (0.42, 0.56), (0.44, 0.62), (0.54, 0.66), (0.67, 0.48),
                       (0.68, 0.56), (0.78, 0.64), (0.80, 0.72), (0.90, 0.54),
-                      (0.91, 0.62)]:
-        fill_rect(x + w * wx, y + h * wy, x + w * wx + 3, y + h * wy + 3,
+                      (0.91, 0.62), (0.07, 0.70), (0.30, 0.68), (0.56, 0.72),
+                      (0.84, 0.60)]:
+        fill_rect(x + w * wx, y + h * wy, x + w * wx + 4, y + h * wy + 4,
                   (255, 220, 120))
     # long table + chairs + document
     fill_rect(x + w * 0.20, y + h * 0.86, x + w * 0.80, y + h * 0.93,
@@ -995,19 +1043,25 @@ def art_talks(x, y, w, h):
               (40, 36, 44))
     fill_rect(x + w * 0.80 - 10, y + h * 0.70, x + w * 0.80, y + h * 0.86,
               (40, 36, 44))
-    # two seated delegates behind the table (in the chairs, clear of the
-    # flag poles at 0.34w / 0.64w)
+    # three seated delegates behind the table (v2.5: heads r 4 -> 5, plus
+    # a middle delegate behind the document; clear of the flag poles at
+    # 0.34w / 0.64w)
     for (fx, skin, suit) in [(0.25, (232, 190, 150), (30, 36, 52)),
+                             (0.50, (240, 200, 165), (90, 40, 50)),
                              (0.75, (210, 170, 135), (24, 74, 135))]:
         cx = x + w * fx
         hy = y + h * 0.74
-        fill_circle(cx, hy, 4, skin)
-        fill_poly([(cx - 5, hy - 1), (cx + 5, hy - 1), (cx + 4, hy - 4),
-                   (cx - 4, hy - 4)], (40, 32, 28))
+        fill_circle(cx, hy, 5, skin)
+        fill_poly([(cx - 5, hy - 2), (cx + 5, hy - 2), (cx + 4, hy - 5),
+                   (cx - 4, hy - 5)], (40, 32, 28))
         fill_poly([(cx - 7, y + h * 0.86), (cx + 7, y + h * 0.86),
                    (cx + 5, hy + 4), (cx - 5, hy + 4)], suit)
         fill_poly([(cx - 2, hy + 4), (cx + 2, hy + 4), (cx, hy + 8)], WHITE)
     fill_rect(x + w * 0.46, y + h * 0.80, x + w * 0.54, y + h * 0.86, WHITE)
+    # water glasses on the table (clear of delegates and flag poles)
+    for gx in (x + w * 0.30, x + w * 0.68):
+        fill_rect(gx, y + h * 0.78, gx + 4, y + h * 0.86, (220, 235, 245))
+        draw_rect_outline(gx, y + h * 0.78, gx + 4, y + h * 0.86, INK, 1)
     # two flags on the table: Qatar maroon + light blue (bigger than v2.3)
     draw_line(x + w * 0.34, y + h * 0.86, x + w * 0.34, y + h * 0.58, INK, 1)
     fill_rect(x + w * 0.34, y + h * 0.58, x + w * 0.34 + 18, y + h * 0.58 + 11,
@@ -1055,9 +1109,17 @@ def art_fence(x, y, w, h):
         pts.append((x + 6 + i * 8, y + h * 0.44 - (4 if i % 2 == 0 else 0)))
     for a, b in zip(pts, pts[1:]):
         draw_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), INK, 1)
-    # snow drifts along the fence base (pale blue-grey so they read on white)
-    for (dx, dr) in [(0.08, 5), (0.20, 6), (0.34, 5), (0.50, 6), (0.60, 5)]:
-        fill_circle(x + w * dx, y + h * 0.94, dr, (214, 224, 234))
+    # snow drifts along the fence base (v2.5: centres moved to 0.90h and
+    # radii capped at 4 so no drift paints below the art rect; the road
+    # band below covers their middles, leaving mounds above and below it)
+    for (dx, dr) in [(0.08, 4), (0.20, 3), (0.34, 4), (0.50, 3), (0.60, 4),
+                      (0.70, 3), (0.90, 4)]:
+        fill_circle(x + w * dx, y + h * 0.90, dr, (214, 224, 234))
+    # road band along the bottom with tyre tracks (the crossing itself)
+    fill_rect(x, y + h * 0.88, x + w, y + h * 0.96, (200, 205, 212))
+    for tx in range(int(x + 8), int(x + w - 8), 12):
+        fill_rect(tx, y + h * 0.90, tx + 6, y + h * 0.92, (160, 166, 174))
+        fill_rect(tx, y + h * 0.94, tx + 6, y + h * 0.96, (160, 166, 174))
     # checkpoint booth, right, with a lit window
     fill_rect(x + w * 0.62, y + h * 0.34, x + w * 0.82, y + h * 0.86, WHITE)
     draw_rect_outline(x + w * 0.62, y + h * 0.34, x + w * 0.82, y + h * 0.86,
@@ -1078,33 +1140,41 @@ def art_fence(x, y, w, h):
                   x + w * 0.62 - i * 9, y + h * 0.56 - i * 3 + 5, c)
     fill_rect(x + w * 0.62 - 2, y + h * 0.56, x + w * 0.62 + 1, y + h * 0.90, INK)
     # Estonian flag on a freestanding pole, between tower and booth
+    # (v2.5: 12 -> 16px wide so it reads at display size)
     draw_line(x + w * 0.52, y + h * 0.22, x + w * 0.52, y + h * 0.86, INK, 1)
     for j, c in enumerate([(24, 74, 135), INK, WHITE]):
-        fill_rect(x + w * 0.52, y + h * 0.22 + j * 3, x + w * 0.52 + 12,
+        fill_rect(x + w * 0.52, y + h * 0.22 + j * 3, x + w * 0.52 + 16,
                   y + h * 0.22 + (j + 1) * 3, c)
-    # striped barrier arm, raised from the booth pivot
-    for i in range(4):
-        c = RED if i % 2 == 0 else WHITE
-        fill_rect(x + w * 0.62 - (i + 1) * 9, y + h * 0.56 - i * 3,
-                  x + w * 0.62 - i * 9, y + h * 0.56 - i * 3 + 5, c)
-    fill_rect(x + w * 0.62 - 2, y + h * 0.56, x + w * 0.62 + 1, y + h * 0.90, INK)
-    # Estonian flag on a freestanding pole, centre
-    draw_line(x + w * 0.52, y + h * 0.22, x + w * 0.52, y + h * 0.86, INK, 1)
-    for j, c in enumerate([(24, 74, 135), INK, WHITE]):
-        fill_rect(x + w * 0.52, y + h * 0.22 + j * 3, x + w * 0.52 + 12,
-                  y + h * 0.22 + (j + 1) * 3, c)
+    # border guard standing by the booth (head + hi-vis jacket)
+    gx = x + w * 0.585
+    gy = y + h * 0.72
+    fill_circle(gx, gy, 3, (232, 190, 150))
+    fill_poly([(gx - 4, gy - 1), (gx + 4, gy - 1), (gx + 3, gy - 4),
+               (gx - 3, gy - 4)], (40, 32, 28))
+    fill_poly([(gx - 5, y + h * 0.88), (gx + 5, y + h * 0.88),
+               (gx + 4, gy + 3), (gx - 4, gy + 3)], (240, 200, 40))
+    draw_line(gx - 3, gy + 5, gx + 3, gy + 5, WHITE, 1)
+    # (duplicate barrier + flag block removed in v2.5: it repainted the
+    # same pixels and shadowed the widened 16px flag above)
 
 
 def art_blast(x, y, w, h):
     """Yemen strikes: ruined building, blast flash, smoke, rescue."""
-    fill_rect(x, y, x + w, y + h, (232, 190, 150))
-    fill_rect(x, y + h * 0.62, x + w, y + h, (200, 160, 120))
+    # v2.5: lighter dusty sky + ground so the ruins and the ambulance
+    # read instead of sinking into a dark box
+    fill_rect(x, y, x + w, y + h, (240, 205, 165))
+    fill_rect(x, y + h * 0.62, x + w, y + h, (208, 170, 130))
     # distant minaret + dome silhouette, right (regional cue, damaged)
     fill_poly([(x + w * 0.86, y + h * 0.62), (x + w * 0.86, y + h * 0.44),
                (x + w * 0.90, y + h * 0.38), (x + w * 0.94, y + h * 0.44),
                (x + w * 0.94, y + h * 0.62)], (110, 92, 76))
     fill_poly([(x + w * 0.90, y + h * 0.38), (x + w * 0.88, y + h * 0.30),
                (x + w * 0.92, y + h * 0.30)], (110, 92, 76))
+    # lit windows on the minaret shaft
+    fill_rect(x + w * 0.885, y + h * 0.48, x + w * 0.885 + 4,
+              y + h * 0.48 + 5, (255, 220, 120))
+    fill_rect(x + w * 0.885, y + h * 0.55, x + w * 0.885 + 4,
+              y + h * 0.55 + 5, (255, 220, 120))
     fill_poly([(x + w * 0.96, y + h * 0.62), (x + w * 0.96, y + h * 0.52),
                (x + w * 0.99, y + h * 0.46), (x + w, y + h * 0.52),
                (x + w, y + h * 0.62)], (110, 92, 76))
@@ -1142,7 +1212,8 @@ def art_blast(x, y, w, h):
     # white-hot core + short sparks (side/down only: the burst sits near
     # the top of the art rect)
     fill_circle(fx, fy, 3, (255, 245, 200))
-    for (dx, dy) in [(-1, 0), (1, 0), (-0.7, 0.7), (0, 1), (0.7, 0.7)]:
+    for (dx, dy) in [(-1, 0), (1, 0), (-0.7, 0.7), (0, 1), (0.7, 0.7),
+                      (-0.35, 0.9), (0.35, 0.9)]:
         draw_line(int(fx + dx * 14), int(fy + dy * 14),
                   int(fx + dx * 18), int(fy + dy * 18), (255, 220, 90), 1)
     # second building, right, lower
@@ -1161,15 +1232,25 @@ def art_blast(x, y, w, h):
     fill_poly([(x + w * 0.06, y + h - 1), (x + w * 0.10, y + h - 1),
                (x + w * 0.30, y + h * 0.58), (x + w * 0.26, y + h * 0.58)],
               (255, 240, 190))
-    # ambulance, bottom centre-right, in front of the dust (kept in-rect:
+    # ambulance, bottom centre-right, in front of the dust (v2.5: wider
+    # body + roof light bar so it reads as an ambulance at display size;
     # body bottom y+43.9, wheels to y+45.9 max)
     ax0, ay0 = x + w * 0.56, y + h * 0.78
-    fill_rect(ax0, ay0, ax0 + 30, ay0 + 8, WHITE)
-    draw_rect_outline(ax0, ay0, ax0 + 30, ay0 + 8, INK, 1)
-    fill_rect(ax0 + 12, ay0 + 1, ax0 + 16, ay0 + 7, RED)
-    fill_rect(ax0 + 9, ay0 + 3, ax0 + 19, ay0 + 5, RED)
-    for wx in (ax0 + 6, ax0 + 24):
+    fill_rect(ax0, ay0, ax0 + 34, ay0 + 8, WHITE)
+    draw_rect_outline(ax0, ay0, ax0 + 34, ay0 + 8, INK, 1)
+    fill_rect(ax0 + 14, ay0 + 1, ax0 + 18, ay0 + 7, RED)
+    fill_rect(ax0 + 11, ay0 + 3, ax0 + 21, ay0 + 5, RED)
+    fill_rect(ax0 + 4, ay0 - 2, ax0 + 10, ay0, RED)
+    fill_rect(ax0 + 12, ay0 - 2, ax0 + 18, ay0, (24, 74, 135))
+    for wx in (ax0 + 7, ax0 + 27):
         fill_circle(wx, ay0 + 8, 2, INK)
+    # rescue worker with a yellow helmet, left of the ambulance
+    wx, wy = x + w * 0.48, y + h * 0.76
+    fill_circle(wx, wy, 3, (232, 190, 150))
+    fill_poly([(wx - 3, wy - 1), (wx + 3, wy - 1), (wx + 2, wy - 4),
+               (wx - 2, wy - 4)], (255, 220, 90))
+    fill_poly([(wx - 4, wy + 10), (wx + 4, wy + 10), (wx + 3, wy + 2),
+               (wx - 3, wy + 2)], (240, 120, 30))
     # rubble: bigger broken pieces at the base (bottoms kept <= y+45)
     for (dx, dy, dw) in [(0.12, 0.93, 6), (0.26, 0.94, 5), (0.44, 0.93, 7),
                           (0.52, 0.94, 5), (0.70, 0.93, 6)]:
@@ -1370,7 +1451,9 @@ def draw_lead_card(x, y, num, region, head, deck, subdeck, sources, badge, art):
                  tracking=0.3)
     draw_wrapped(x + 8, y + 206, subdeck, 11, "regular", GREY, w - 16, 13, 2,
                  tracking=0.3)
-    draw_text(x + 8, y + 230, sources, 9, "regular", LGREY)
+    # v2.5: sources LGREY -> GREY for contrast (still 9px, still 3.75px
+    # clear of the card edge).
+    draw_text(x + 8, y + 230, sources, 9, "regular", GREY)
 
 
 def draw_stat_panel(x, y):
@@ -1392,23 +1475,28 @@ def draw_small_card(x, y, num, region, head, deck, sources, badge, art):
     ART[art](x + 1, y + 1, w - 2, 46)
     draw_num_disc(x + 12, y + 13, num, r=8, size=10)
     draw_badge(x + w - 4, y + 5, badge)
-    # v2.4: dark callout pill, top-left below the number disc (measured
-    # clear of each art's focal elements on cards 6 and 13). Card 8's
-    # tanker fills the lower art, so its pill rides the top sky strip
-    # instead (clear of the disc, the sun and the funnel smoke); the "~"
-    # qualifier lives in the deck ("oil holds ~$86.71").
+    # v2.5: small callout pills run at 9px now (measured sharper in the
+    # 2x crops); card 13's pill sits 2px lower so it no longer clips the
+    # starburst's lowest points. Card 8's tanker fills the lower art, so
+    # its pill rides the top sky strip instead (clear of the disc, the
+    # sun and the funnel smoke); the "~" qualifier lives in the deck
+    # ("oil holds ~$86.71").
     call = SMALL_CALLOUTS.get(num)
     if call:
         if num == 8:
-            draw_callout(x + 24, y + 6, call, 8)
+            draw_callout(x + 24, y + 6, call, 9)
+        elif num == 13:
+            draw_callout(x + 6, y + 28, call, 9)
         else:
-            draw_callout(x + 6, y + 24, call, 8)
+            draw_callout(x + 6, y + 24, call, 9)
     draw_wrapped(x + 8, y + 66, head, 16, "bold", INK, w - 16, 18, 2)
     # v2.3: deck 10->12 / leading 11->13 / tracking 0.3 (measured: still
     # <=2 lines for all ten small decks; 4px clear to the sources line).
     draw_wrapped(x + 8, y + 100, deck, 12, "regular", INK, w - 16, 13, 2,
                  tracking=0.3)
-    draw_text(x + 8, y + 126, sources, 8, "regular", LGREY)
+    # v2.5: sources 8 -> 9px and LGREY -> GREY (widths probed: max 104.7
+    # of 176px, so nothing wraps or clips).
+    draw_text(x + 8, y + 126, sources, 9, "regular", GREY)
 
 
 def draw_also_list(x0, y0):
@@ -1430,11 +1518,16 @@ def draw_also_list(x0, y0):
             # title + source on one line (title 11->12 in v2.3; measured
             # gap to the source stays >=86px for every item)
             draw_text(cx + 20, cy + 9, title, 12, "bold", INK)
-            draw_text_right(cx + col_w, cy + 9, source, 9, "regular", LGREY)
+            # v2.5: source LGREY -> darker grey (still 9px); desc GREY ->
+            # (70,70,70) for contrast. Desc stays 11px: the probe showed
+            # 12px flips 5 items to 2 lines and pushes also_bottom +39px,
+            # which would crush the DATE CHECK + map band.
+            draw_text_right(cx + col_w, cy + 9, source, 9, "regular",
+                            (88, 88, 88))
             # desc, wrapped under the title (11px, leading 13, tracking
             # 0.3; measured: same line counts as v2.2 for every item)
-            lines = draw_wrapped(cx + 20, cy + 20, desc, 11, "regular", GREY,
-                                 col_w - 20, 13, tracking=0.3)
+            lines = draw_wrapped(cx + 20, cy + 20, desc, 11, "regular",
+                                 (70, 70, 70), col_w - 20, 13, tracking=0.3)
             cy += 10 + 13 * len(lines) + 4
         bottom = max(bottom, cy)
     return bottom
@@ -1465,10 +1558,10 @@ def draw_datecheck(x, y, w, h):
     fill_rect(x, y, x + w, y + h, (253, 248, 240))
     draw_rect_outline(x, y, x + w, y + h, RED, 2)
     ix = x + 10
-    # v2.3: header tightened by 3px (title +12, rule +25, left-out +37,
-    # items +49) to fund the item gap 2->3 without touching the bottom
-    # border; leading stays 12 and NO tracking (measured: tracking flips
-    # items to extra date lines and the box overflows).
+    # v2.5: item gap 3 -> 4 for breathing room, funded by starting the
+    # items 2px higher (y+47) and the "Also covered" line 2px closer
+    # (+5): measured bottom clearance stays ~3.5px. Font stays 10px:
+    # 11px flips items to extra date lines and the box overflows.
     draw_text(ix, y + 12, "DATE CHECK \u2014 WHAT IS NOT IN THIS IMAGE",
               13, "bold", RED)
     draw_text(ix, y + 25,
@@ -1478,15 +1571,15 @@ def draw_datecheck(x, y, w, h):
               10, "bold", INK)
     col_w = 188
     col_x = [ix, ix + 196, ix + 392]
-    max_bottom = y + 49
+    max_bottom = y + 47
     for ci, col in enumerate(DATECHECK_COLS):
-        cy = y + 49
+        cy = y + 47
         for (text, date) in col:
             used = draw_datecheck_item(col_x[ci], cy, text, date, col_w)
-            cy += used + 3
+            cy += used + 4
         max_bottom = max(max_bottom, cy)
-    draw_text(ix, max_bottom + 7, DATECHECK_ALSO, 10, "regular", GREY)
-    return max_bottom + 7 + 12
+    draw_text(ix, max_bottom + 5, DATECHECK_ALSO, 10, "regular", GREY)
+    return max_bottom + 5 + 12
 
 
 def draw_footer(y):
