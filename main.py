@@ -189,6 +189,11 @@ with open(os.path.join(_HERE, "glyphs.json"), "r") as _fh:
     _GLYPHS = json.load(_fh)
 UPM = _GLYPHS["upm"]
 _FACES = _GLYPHS["faces"]
+# Deepest glyph point below the baseline, in font units (worst over both
+# faces). The DATE CHECK bottom-border guard uses it so a descender can
+# never be clipped by the box border, whatever string is drawn.
+_FONT_DESCENT = -min(py for _face in _FACES.values() for _g in _face.values()
+                     for _c in _g["c"] for (_px, py) in _c)
 
 
 def text_width(s, size, face="regular", tracking=0.0):
@@ -1535,9 +1540,22 @@ def draw_datecheck(x, y, w, h):
             used = draw_datecheck_item(col_x[ci], cy, text, date, col_w)
             cy += used + 7
         max_bottom = max(max_bottom, cy)
+    # v3.0: structural bottom-border guard. dc_bottom is computed from the
+    # box parameters (y, h) — never hardcoded pixels. The "Also covered"
+    # line's baseline + descender is clamped to stay at or above dc_bottom,
+    # so its ink can never touch or clip the bottom red border. In the
+    # current layout the clamp does not fire (clearance 8px); it is a
+    # guarantee, not a layout change.
+    dc_bottom = y + h - 3
+    also_size = 10
+    also_descent = _FONT_DESCENT * also_size / UPM
+    also_baseline = max_bottom + 4
+    if also_baseline + also_descent > dc_bottom:
+        also_baseline = dc_bottom - also_descent
     # v2.8: "Also covered" GREY -> (80,80,80) for contrast.
-    draw_text(ix, max_bottom + 4, DATECHECK_ALSO, 10, "regular", (80, 80, 80))
-    return max_bottom + 4 + 12
+    draw_text(ix, also_baseline, DATECHECK_ALSO, also_size, "regular",
+              (80, 80, 80))
+    return also_baseline + 12
 
 
 def draw_footer(y):
